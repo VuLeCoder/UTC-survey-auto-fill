@@ -17,7 +17,15 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
 
       const subjectName = extractSubjectName(selectedOption.textContent);
 
-      const strategy = config.subjects[subjectName] || config.defaultStrategy;
+      let strategy = config.subjects[subjectName] || "DEFAULT";
+
+      console.log(
+        `Processing subject: "${subjectName}", selected strategy: "${strategy}"`,
+      );
+
+      if (strategy === "DEFAULT") {
+        strategy = config.defaultStrategy;
+      }
 
       fillCurrentSubject(strategy);
 

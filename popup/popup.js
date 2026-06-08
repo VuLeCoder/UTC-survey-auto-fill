@@ -51,6 +51,11 @@ async function loadSubjects() {
         loadBtn.style.display = "none";
 
         configSection.hidden = false;
+
+        const config = await loadConfig();
+        if (Object.keys(config.subjects).length > 0 || config.defaultStrategy) {
+          fillBtn.hidden = false;
+        }
       },
     );
   } catch (err) {
