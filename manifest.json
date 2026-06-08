@@ -17,6 +17,7 @@
       "js": [
         "utils/surveyParser.js",
         "utils/strategies.js",
+        "utils/filler.js",
         "content/content.js"
       ]
     }

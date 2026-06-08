@@ -4,9 +4,11 @@ const defaultStrategy = document.getElementById("default-strategy");
 
 const loadBtn = document.getElementById("load-btn");
 const saveBtn = document.getElementById("save-btn");
+const fillBtn = document.getElementById("fill-btn");
 
 loadBtn.addEventListener("click", loadSubjects);
 saveBtn.addEventListener("click", saveConfig);
+fillBtn.addEventListener("click", triggerFill);
 
 window.addEventListener("DOMContentLoaded", async () => {
   const data = await chrome.storage.local.get("surveyConfig");
@@ -166,4 +168,49 @@ async function saveConfig() {
   }, 1500);
 
   console.log("saved config", config);
+}
+
+async function triggerFill() {
+  fillBtn.disabled = true;
+
+  fillBtn.textContent = "Filling...";
+
+  try {
+    const config = await loadConfig();
+
+    const [tab] = await chrome.tabs.query({
+      active: true,
+      currentWindow: true,
+    });
+
+    chrome.tabs.sendMessage(
+      tab.id,
+      {
+        type: "FILL_SURVEY",
+
+        config: config,
+      },
+      (response) => {
+        fillBtn.disabled = false;
+
+        fillBtn.textContent = "Fill Current Subject";
+
+        if (chrome.runtime.lastError) {
+          console.error(chrome.runtime.lastError);
+
+          return;
+        }
+
+        if (response && response.success) {
+          console.log("Filled successfully");
+        }
+      },
+    );
+  } catch (err) {
+    console.error(err);
+
+    fillBtn.disabled = false;
+
+    fillBtn.textContent = "Fill Current Subject";
+  }
 }
