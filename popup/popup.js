@@ -4,7 +4,6 @@ const container = document.getElementById("subjects-container");
 const configSection = document.getElementById("config-section");
 const actionSection = document.getElementById("action-section");
 const defaultStrategy = document.getElementById("default-strategy");
-const autoOk = document.getElementById("auto-ok");
 
 const loadBtn = document.getElementById("load-btn");
 const saveBtn = document.getElementById("save-btn");
@@ -21,7 +20,6 @@ fillBtn.addEventListener("click", triggerFill);
 fillAllBtn.addEventListener("click", triggerFillAll);
 
 defaultStrategy.addEventListener("change", hideActions);
-autoOk.addEventListener("change", () => saveConfig(true));
 
 function hideActions() {
   actionSection.hidden = true;
@@ -180,7 +178,6 @@ async function renderSubjects(subjects) {
   const config = await loadConfig();
 
   defaultStrategy.value = config.defaultStrategy;
-  autoOk.checked = !!config.autoOk;
 
   const uniqueSubjects = [...new Set(subjects.map((x) => x.subject))];
 
@@ -207,7 +204,6 @@ async function loadConfig() {
   const config = data.surveyConfig || {};
   return {
     defaultStrategy: config.defaultStrategy || "RANDOM_45",
-    autoOk: !!config.autoOk,
     subjects: config.subjects || {},
   };
 }
@@ -215,7 +211,6 @@ async function loadConfig() {
 async function saveConfig(silent = false) {
   const config = {
     defaultStrategy: defaultStrategy.value,
-    autoOk: autoOk.checked,
     subjects: {},
   };
 

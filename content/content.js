@@ -23,43 +23,13 @@ function init() {
     const config = data.surveyConfig || {
       defaultStrategy: "RANDOM_45",
       subjects: {},
-      autoOk: false,
     };
-
-    if (config.autoOk) {
-      injectAutoOk();
-    }
 
     if (data.isAutoFilling) {
       console.log("Auto-filling is active, continuing...");
       handleAutoFillAll(config);
     }
   });
-}
-
-function injectAutoOk() {
-  console.log("Injecting Auto-OK script...");
-
-  const script = document.createElement("script");
-  script.textContent = `
-    (function() {
-      const originalAlert = window.alert;
-      const originalConfirm = window.confirm;
-
-      window.alert = function(msg) { 
-        console.log("Intercepted alert:", msg); 
-        return true; 
-      };
-
-      window.confirm = function(msg) { 
-        console.log("Intercepted confirm:", msg); 
-        return true; 
-      };
-    })();
-  `;
-
-  (document.head || document.documentElement).appendChild(script);
-  script.remove();
 }
 
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
