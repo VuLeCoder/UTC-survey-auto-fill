@@ -15,6 +15,38 @@ const subjectsContainer = document.getElementById("subjects-container");
 
 const defaultStrategy = document.getElementById("default-strategy");
 
+const STRATEGY = {
+  RANDOM_13: "RANDOM_13",
+  RANDOM_34: "RANDOM_34",
+  RANDOM_45: "RANDOM_45",
+
+  ONE4_FULL5: "ONE4_FULL5",
+  ONE5_FULL4: "ONE5_FULL4",
+};
+
+const STRATEGIES = [
+  {
+    value: STRATEGY.RANDOM_13,
+    text: "Random 1-3",
+  },
+  {
+    value: STRATEGY.RANDOM_34,
+    text: "Random 3-4",
+  },
+  {
+    value: STRATEGY.RANDOM_45,
+    text: "Random 4-5",
+  },
+  {
+    value: STRATEGY.ONE4_FULL5,
+    text: "One 4 Full 5",
+  },
+  {
+    value: STRATEGY.ONE5_FULL4,
+    text: "One 5 Full 4",
+  },
+];
+
 async function getSubjectConfig() {
   const result = await chrome.storage.local.get("subject_config");
 
