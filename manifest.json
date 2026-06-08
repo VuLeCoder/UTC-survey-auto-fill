@@ -1,0 +1,24 @@
+{
+  "manifest_version": 3,
+  "name": "Survey Helper",
+  "version": "1.0",
+
+  "permissions": ["activeTab", "storage"],
+
+  "host_permissions": ["<all_urls>"],
+
+  "action": {
+    "default_popup": "popup/popup.html"
+  },
+
+  "content_scripts": [
+    {
+      "matches": ["<all_urls>"],
+      "js": [
+        "utils/surveyParser.js",
+        "utils/strategies.js",
+        "content/content.js"
+      ]
+    }
+  ]
+}
