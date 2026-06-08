@@ -1,5 +1,12 @@
 console.log("content.js loaded");
 
+const STORAGE_KEYS = {
+  AUTO_FILLING: "isAutoFilling",
+  CONFIG: "surveyConfig",
+  LAST_SUBMITTED: "lastSubmittedSubject",
+  WAITING_REFRESH: "waitingRefresh",
+};
+
 function isSurveyPage() {
   const url = window.location.href;
 
@@ -16,20 +23,46 @@ if (!isSurveyPage()) {
   init();
 }
 
-function init() {
-  console.log("[Survey Helper] Survey page detected → running...");
+async function init() {
+  console.log("[Survey Helper] Survey page detected");
 
-  chrome.storage.local.get(["isAutoFilling", "surveyConfig"], (data) => {
-    const config = data.surveyConfig || {
-      defaultStrategy: "RANDOM_45",
-      subjects: {},
-    };
+  chrome.storage.local.get(
+    [
+      STORAGE_KEYS.AUTO_FILLING,
+      STORAGE_KEYS.CONFIG,
+      STORAGE_KEYS.WAITING_REFRESH,
+    ],
+    (data) => {
+      const config = data.surveyConfig || {
+        defaultStrategy: "RANDOM_45",
+        subjects: {},
+      };
 
-    if (data.isAutoFilling) {
-      console.log("Auto-filling is active, continuing...");
-      handleAutoFillAll(config);
-    }
-  });
+      if (!data.isAutoFilling) {
+        return;
+      }
+
+      if (data.waitingRefresh) {
+        console.log(
+          "[AutoFill] First reload after submit -> force second reload",
+        );
+
+        chrome.storage.local.set({
+          [STORAGE_KEYS.WAITING_REFRESH]: false,
+        });
+
+        setTimeout(() => {
+          location.reload();
+        }, 1500);
+
+        return;
+      }
+
+      setTimeout(() => {
+        handleAutoFillAll(config);
+      }, 1000);
+    },
+  );
 }
 
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
@@ -59,38 +92,60 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
 
 async function handleAutoFillAll(config) {
   const subjects = getSubjects();
+
+  console.table(subjects);
+
   const unrated = subjects.filter((s) => s.isUnrated);
 
+  console.log("[AutoFill] Unrated:", unrated.length);
+
   if (unrated.length === 0) {
-    console.log("All subjects filled!");
+    console.log("[AutoFill] All subjects completed");
 
-    await chrome.storage.local.set({ isAutoFilling: false });
+    await chrome.storage.local.set({
+      [STORAGE_KEYS.AUTO_FILLING]: false,
+      [STORAGE_KEYS.LAST_SUBMITTED]: null,
+    });
 
-    alert("Xong! Tất cả các môn đã được đánh giá.");
+    alert("Đã hoàn thành tất cả khảo sát.");
+
     return;
   }
 
   const select = document.querySelector('select[name="lophocphan"]');
-  if (!select) return;
+
+  if (!select) {
+    return;
+  }
 
   const currentValue = select.value;
+
+  console.log("[AutoFill] Current:", currentValue);
+
   const isCurrentUnrated = unrated.some((s) => s.value === currentValue);
 
   if (isCurrentUnrated) {
-    console.log("Current subject is unrated, filling...");
+    console.log("[AutoFill] Fill current subject");
+
     fillAndOptionallySubmit(config, true);
+
+    return;
+  }
+
+  const target = unrated[0];
+
+  console.log("[AutoFill] Switch to:", target.fullName);
+
+  select.value = target.value;
+
+  if (window.jQuery) {
+    $(select).trigger("change");
   } else {
-    const target = unrated[0];
-
-    console.log(`Switching to: ${target.fullName}`);
-
-    select.value = target.value;
-
-    if (select.onchange) {
-      select.onchange();
-    } else {
-      select.dispatchEvent(new Event("change", { bubbles: true }));
-    }
+    select.dispatchEvent(
+      new Event("change", {
+        bubbles: true,
+      }),
+    );
   }
 }
 
@@ -115,7 +170,18 @@ function fillAndOptionallySubmit(config, forceSubmit = false) {
 
     if (submitBtn) {
       console.log("Submitting...");
-      submitBtn.click();
+
+      chrome.storage.local.set({
+        [STORAGE_KEYS.LAST_SUBMITTED]: select.value,
+
+        [STORAGE_KEYS.WAITING_REFRESH]: true,
+      });
+
+      console.log("[AutoFill] Submit:", select.value);
+
+      setTimeout(() => {
+        submitBtn.click();
+      }, 800);
     } else {
       console.warn("Submit button not found");
     }

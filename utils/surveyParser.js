@@ -17,13 +17,16 @@ function getSubjects() {
     return [];
   }
 
-  return [...select.options].map((option) => ({
-    value: option.value,
+  return [...select.options].map((option) => {
+    const text = option.textContent.trim();
 
-    fullName: option.textContent.trim(),
+    return {
+      value: option.value,
+      fullName: text,
+      subject: extractSubjectName(text),
 
-    subject: extractSubjectName(option.textContent),
-
-    isUnrated: option.textContent.includes("(Chưa đánh giá)"),
-  }));
+      // isUnrated: true,
+      isUnrated: text.includes("Chưa đánh giá"),
+    };
+  });
 }
