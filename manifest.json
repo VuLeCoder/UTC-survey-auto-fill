@@ -13,7 +13,7 @@
 
   "content_scripts": [
     {
-      "matches": ["<all_urls>"],
+      "matches": ["https://sis.utc.edu.vn/*"],
       "js": [
         "utils/surveyParser.js",
         "utils/strategies.js",

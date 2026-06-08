@@ -1,3 +1,5 @@
+const SURVEY_DOMAIN = "sis.utc.edu.vn";
+
 const container = document.getElementById("subjects-container");
 const configSection = document.getElementById("config-section");
 const actionSection = document.getElementById("action-section");
@@ -8,6 +10,10 @@ const loadBtn = document.getElementById("load-btn");
 const saveBtn = document.getElementById("save-btn");
 const fillBtn = document.getElementById("fill-btn");
 const fillAllBtn = document.getElementById("fill-all-btn");
+
+const statusSection = document.getElementById("status-section");
+const statusMessage = document.getElementById("status-message");
+const statusActionBtn = document.getElementById("status-action-btn");
 
 loadBtn.addEventListener("click", loadSubjects);
 saveBtn.addEventListener("click", () => saveConfig(false));
@@ -26,14 +32,51 @@ function showActions() {
 }
 
 window.addEventListener("DOMContentLoaded", async () => {
-  const data = await chrome.storage.local.get("surveyConfig");
+  const isValid = await detectValidTab();
+  if (!isValid) return;
 
+  const data = await chrome.storage.local.get("surveyConfig");
   if (!data.surveyConfig) {
     return;
   }
 
   loadSubjects();
 });
+
+async function detectValidTab() {
+  const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
+
+  if (tab && tab.url && tab.url.includes(SURVEY_DOMAIN)) {
+    statusSection.hidden = true;
+    loadBtn.hidden = false;
+    return true;
+  }
+
+  // Not on valid domain, search for other tabs
+  const allTabs = await chrome.tabs.query({ currentWindow: true });
+  const otherTab = allTabs.find((t) => t.url && t.url.includes(SURVEY_DOMAIN));
+
+  statusSection.hidden = false;
+  loadBtn.hidden = true;
+  configSection.hidden = true;
+
+  if (otherTab) {
+    statusMessage.textContent = "Bạn đang ở tab khác. Quay lại tab UTC?";
+    statusActionBtn.textContent = "Chuyển tới tab UTC";
+    statusActionBtn.onclick = () => {
+      chrome.tabs.update(otherTab.id, { active: true });
+      window.close();
+    };
+  } else {
+    statusMessage.textContent = "Vui lòng mở trang khảo sát của UTC.";
+    statusActionBtn.textContent = "Mở trang khảo sát";
+    statusActionBtn.onclick = () => {
+      chrome.tabs.create({ url: SURVEY_URL });
+      window.close();
+    };
+  }
+  return false;
+}
 
 async function loadSubjects() {
   loadBtn.disabled = true;
@@ -58,11 +101,19 @@ async function loadSubjects() {
           return;
         }
 
-        await renderSubjects(response.subjects);
-        loadBtn.style.display = "none";
-        configSection.hidden = false;
-        
-        hideActions();
+        if (response && response.subjects) {
+          await renderSubjects(response.subjects);
+          loadBtn.style.display = "none";
+          configSection.hidden = false;
+          hideActions();
+        } else {
+          statusSection.hidden = false;
+          statusMessage.textContent =
+            "Bạn cần vào đúng trang 'Khảo sát trực tuyến'.";
+          statusActionBtn.textContent = "Đi tới trang khảo sát";
+          loadBtn.disabled = false;
+          loadBtn.textContent = "Load Subjects";
+        }
       },
     );
   } catch (err) {

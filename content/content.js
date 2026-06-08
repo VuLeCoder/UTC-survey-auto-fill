@@ -1,25 +1,45 @@
 console.log("content.js loaded");
 
-// Auto-run if enabled
-chrome.storage.local.get(["isAutoFilling", "surveyConfig"], (data) => {
-  const config = data.surveyConfig || {
-    defaultStrategy: "RANDOM_45",
-    subjects: {},
-    autoOk: false,
-  };
+function isSurveyPage() {
+  const url = window.location.href;
 
-  if (config.autoOk) {
-    injectAutoOk();
-  }
+  return (
+    url.includes("survey") ||
+    url.includes("khao-sat") ||
+    document.querySelector('select[name="lophocphan"]') // fallback mạnh nhất
+  );
+}
 
-  if (data.isAutoFilling) {
-    console.log("Auto-filling is active, continuing...");
-    handleAutoFillAll(config);
-  }
-});
+if (!isSurveyPage()) {
+  console.log("[Survey Helper] Not survey page → skip execution");
+} else {
+  init();
+}
+
+function init() {
+  console.log("[Survey Helper] Survey page detected → running...");
+
+  chrome.storage.local.get(["isAutoFilling", "surveyConfig"], (data) => {
+    const config = data.surveyConfig || {
+      defaultStrategy: "RANDOM_45",
+      subjects: {},
+      autoOk: false,
+    };
+
+    if (config.autoOk) {
+      injectAutoOk();
+    }
+
+    if (data.isAutoFilling) {
+      console.log("Auto-filling is active, continuing...");
+      handleAutoFillAll(config);
+    }
+  });
+}
 
 function injectAutoOk() {
   console.log("Injecting Auto-OK script...");
+
   const script = document.createElement("script");
   script.textContent = `
     (function() {
@@ -27,24 +47,27 @@ function injectAutoOk() {
       const originalConfirm = window.confirm;
 
       window.alert = function(msg) { 
-        if (msg && msg.includes("Xong!")) {
-          originalAlert(msg);
-          return;
-        }
         console.log("Intercepted alert:", msg); 
         return true; 
       };
+
       window.confirm = function(msg) { 
         console.log("Intercepted confirm:", msg); 
         return true; 
       };
     })();
   `;
+
   (document.head || document.documentElement).appendChild(script);
   script.remove();
 }
 
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
+  if (!isSurveyPage()) {
+    sendResponse?.({ success: false, reason: "not_survey_page" });
+    return true;
+  }
+
   if (message.type === "GET_SUBJECTS") {
     sendResponse({
       subjects: getSubjects(),
@@ -52,18 +75,12 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
   }
 
   if (message.type === "FILL_SURVEY") {
-    const { config } = message;
-
-    fillAndOptionallySubmit(config);
-
+    fillAndOptionallySubmit(message.config);
     sendResponse({ success: true });
   }
 
   if (message.type === "START_AUTO_FILL_ALL") {
-    const { config } = message;
-
-    handleAutoFillAll(config);
-
+    handleAutoFillAll(message.config);
     sendResponse({ success: true });
   }
 
@@ -72,7 +89,6 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
 
 async function handleAutoFillAll(config) {
   const subjects = getSubjects();
-
   const unrated = subjects.filter((s) => s.isUnrated);
 
   if (unrated.length === 0) {
@@ -81,33 +97,27 @@ async function handleAutoFillAll(config) {
     await chrome.storage.local.set({ isAutoFilling: false });
 
     alert("Xong! Tất cả các môn đã được đánh giá.");
-
     return;
   }
 
   const select = document.querySelector('select[name="lophocphan"]');
-
   if (!select) return;
 
   const currentValue = select.value;
-
   const isCurrentUnrated = unrated.some((s) => s.value === currentValue);
 
   if (isCurrentUnrated) {
     console.log("Current subject is unrated, filling...");
-
-    fillAndOptionallySubmit(config, true); // Force submit for auto-fill all
+    fillAndOptionallySubmit(config, true);
   } else {
     const target = unrated[0];
 
-    console.log(`Switching to unrated subject: ${target.fullName}`);
+    console.log(`Switching to: ${target.fullName}`);
 
     select.value = target.value;
 
     if (select.onchange) {
       select.onchange();
-    } else if (select.form) {
-      select.form.submit();
     } else {
       select.dispatchEvent(new Event("change", { bubbles: true }));
     }
@@ -116,22 +126,17 @@ async function handleAutoFillAll(config) {
 
 function fillAndOptionallySubmit(config, forceSubmit = false) {
   const select = document.querySelector('select[name="lophocphan"]');
-
   if (!select) return;
 
   const selectedOption = select.options[select.selectedIndex];
-
   const subjectName = extractSubjectName(selectedOption.textContent);
 
   let strategy = config.subjects[subjectName] || "DEFAULT";
-
   if (strategy === "DEFAULT") {
     strategy = config.defaultStrategy;
   }
 
-  console.log(
-    `Processing subject: "${subjectName}", selected strategy: "${strategy}"`,
-  );
+  console.log(`Subject: "${subjectName}" | Strategy: "${strategy}"`);
 
   fillCurrentSubject(strategy);
 
@@ -140,10 +145,9 @@ function fillAndOptionallySubmit(config, forceSubmit = false) {
 
     if (submitBtn) {
       console.log("Submitting...");
-
       submitBtn.click();
     } else {
-      console.warn("Submit button with id='btnupdate' not found");
+      console.warn("Submit button not found");
     }
   }
 }
