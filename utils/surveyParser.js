@@ -23,5 +23,7 @@ function getSubjects() {
     fullName: option.textContent.trim(),
 
     subject: extractSubjectName(option.textContent),
+
+    isUnrated: option.textContent.includes("(Chưa đánh giá)"),
   }));
 }
