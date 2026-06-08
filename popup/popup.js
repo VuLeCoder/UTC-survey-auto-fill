@@ -1,5 +1,6 @@
 const container = document.getElementById("subjects-container");
 const configSection = document.getElementById("config-section");
+const actionSection = document.getElementById("action-section");
 const defaultStrategy = document.getElementById("default-strategy");
 const autoOk = document.getElementById("auto-ok");
 
@@ -9,9 +10,20 @@ const fillBtn = document.getElementById("fill-btn");
 const fillAllBtn = document.getElementById("fill-all-btn");
 
 loadBtn.addEventListener("click", loadSubjects);
-saveBtn.addEventListener("click", saveConfig);
+saveBtn.addEventListener("click", () => saveConfig(false));
 fillBtn.addEventListener("click", triggerFill);
 fillAllBtn.addEventListener("click", triggerFillAll);
+
+defaultStrategy.addEventListener("change", hideActions);
+autoOk.addEventListener("change", () => saveConfig(true));
+
+function hideActions() {
+  actionSection.hidden = true;
+}
+
+function showActions() {
+  actionSection.hidden = false;
+}
 
 window.addEventListener("DOMContentLoaded", async () => {
   const data = await chrome.storage.local.get("surveyConfig");
@@ -49,12 +61,8 @@ async function loadSubjects() {
         await renderSubjects(response.subjects);
         loadBtn.style.display = "none";
         configSection.hidden = false;
-
-        const config = await loadConfig();
-        if (Object.keys(config.subjects).length > 0 || config.defaultStrategy) {
-          fillBtn.hidden = false;
-          fillAllBtn.hidden = false;
-        }
+        
+        hideActions();
       },
     );
   } catch (err) {
@@ -112,6 +120,7 @@ function createStrategySelect() {
         <option value="ONE4_FULL5">One 4 Full 5</option>
         <option value="ONE5_FULL4">One 5 Full 4</option>
     `;
+  select.addEventListener("change", hideActions);
   return select;
 }
 
@@ -152,7 +161,7 @@ async function loadConfig() {
   };
 }
 
-async function saveConfig() {
+async function saveConfig(silent = false) {
   const config = {
     defaultStrategy: defaultStrategy.value,
     autoOk: autoOk.checked,
@@ -169,11 +178,13 @@ async function saveConfig() {
     surveyConfig: config,
   });
 
-  fillBtn.hidden = false;
-  saveBtn.textContent = "Saved ✓";
-  setTimeout(() => {
-    saveBtn.textContent = "Save Config";
-  }, 1500);
+  if (!silent) {
+    showActions();
+    saveBtn.textContent = "Saved ✓";
+    setTimeout(() => {
+      saveBtn.textContent = "Save Config";
+    }, 1500);
+  }
 
   console.log("saved config", config);
 }

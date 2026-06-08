@@ -44,7 +44,6 @@ function injectAutoOk() {
   script.remove();
 }
 
-
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
   if (message.type === "GET_SUBJECTS") {
     sendResponse({
