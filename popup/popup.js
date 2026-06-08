@@ -161,6 +161,8 @@ async function saveConfig() {
     surveyConfig: config,
   });
 
+  fillBtn.hidden = false;
+
   saveBtn.textContent = "Saved ✓";
 
   setTimeout(() => {
