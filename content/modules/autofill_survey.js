@@ -90,26 +90,6 @@ const autofillModule = () => {
     }
 
     let queue = await storageModule.getSurveyQueue();
-    const currentList = getListCourses();
-    const flatClasses = currentList.flatMap((c) => c.classes);
-
-    // Filter out completed courses from the head of the queue
-    let changed = false;
-    while (queue.length > 0) {
-      const top = queue[0];
-      const match = flatClasses.find((c) => c.value === top.value);
-      if (match && match.isCompleted) {
-        console.log(`[AutoFill] ${top.fullName} already completed, skipping.`);
-        queue.shift();
-        changed = true;
-      } else {
-        break;
-      }
-    }
-
-    if (changed) {
-      await storageModule.saveSurveyQueue(queue);
-    }
 
     if (!queue.length) {
       const state = await storageModule.getAutoFillState();
@@ -122,25 +102,15 @@ const autofillModule = () => {
 
     const currClass = queue[0];
     const courseSelector = document.querySelector(COURSE_SELECTOR);
-    const hasQuestions = !!document.querySelector('input[type="radio"]');
 
-    if (hasQuestions) {
-      if (courseSelector && courseSelector.value === currClass.value) {
-        console.log(`[AutoFill] Filling questions for: ${currClass.fullName}`);
-        await fillQuestionsModule.autofillQuestions(currClass.strategy);
-      } else {
-        console.log(
-          `[AutoFill] Wrong class selected or need refresh. Selecting: ${currClass.fullName}`,
-        );
-        await selectClass(currClass.value);
-      }
-    } else {
-      console.log(`[AutoFill] Selecting class: ${currClass.fullName}`);
-      const success = await selectClass(currClass.value);
-      if (!success) {
-        console.error("[AutoFill] Could not find course selector");
-      }
+    const success = await selectClass(currClass.value);
+    if (!success) {
+      console.error("[AutoFill] Could not find course selector");
     }
+
+    await fillQuestionsModule.autofillQuestions(currClass.strategy);
+    queue.shift();
+    await storageModule.saveSurveyQueue(queue);
   }
 
   // === === === === === ===
