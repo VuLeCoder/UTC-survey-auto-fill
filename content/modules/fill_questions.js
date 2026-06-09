@@ -67,4 +67,4 @@ const fillQuestionsModule = () => {
   };
 };
 
-window.UTC.register("modules", "fillQuestions", fillQuestionsModule());
+window.UTC_Vuz.register("modules", "fillQuestions", fillQuestionsModule());
