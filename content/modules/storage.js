@@ -54,14 +54,12 @@ const storageModule = () => {
     async startAutoFill() {
       await set(AUTO_FILL_STATE, {
         running: true,
-        currentIndex: 0,
       });
     },
 
     async stopAutoFill() {
       await set(AUTO_FILL_STATE, {
         running: false,
-        currentIndex: 0,
       });
     },
 
