@@ -1,0 +1,44 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="UTF-8" />
+    <title>Survey Helper</title>
+    <link rel="stylesheet" href="popup.css" />
+  </head>
+
+  <body>
+    <h2>Survey Helper</h2>
+
+    <div id="status-section" hidden>
+      <div id="status-message"></div>
+      <button id="status-action-btn"></button>
+    </div>
+
+    <div id="app-section" hidden>
+      <button id="load-btn">Load Course</button>
+
+      <div id="config-section" hidden>
+        <div id="courses-container"></div>
+
+        <hr />
+
+        <label>Default Strategy</label>
+        <select id="default-strategy">
+          <option value="RANDOM_13">Random 1-3</option>
+          <option value="RANDOM_45">Random 4-5</option>
+          <option value="FULL5_ONE4">Full 5, one 4</option>
+        </select>
+
+        <button id="save-btn">Save Config</button>
+
+        <div id="action-section" hidden>
+          <button id="start-btn" style="margin-top: 8px">
+            Start Auto Fill
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <script src="popup.js"></script>
+  </body>
+</html>
