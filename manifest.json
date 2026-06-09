@@ -20,7 +20,8 @@
 
         "content/modules/storage.js",
         "content/modules/strategy.js",
-        "content/modules/autofill.js",
+        "content/modules/fill_questions.js",
+        "content/modules/autofill_survey.js",
 
         "content/content.js"
       ]
