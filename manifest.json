@@ -23,6 +23,8 @@
         "content/modules/fill_questions.js",
         "content/modules/autofill_survey.js",
 
+        "content/controller/autofill_controller.js",
+
         "content/content.js"
       ]
     }

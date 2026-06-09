@@ -42,9 +42,14 @@ const autofillModule = () => {
 
   function buildQueue(listCourses, config) {
     const queue = [];
+    const defaultStrategy = config.defaultStrategy || "FULL5_ONE4";
+    const courseStrategies = config.courseStrategies || {};
 
     listCourses.forEach((course) => {
-      const strategy = config[course.displayName]?.strategy;
+      let strategy = courseStrategies[course.displayName]?.strategy;
+      if (!strategy || strategy === "DEFAULT") {
+        strategy = defaultStrategy;
+      }
 
       course.classes.forEach((c) => {
         if (c.isCompleted) return;
@@ -77,33 +82,65 @@ const autofillModule = () => {
 
   async function processQueue() {
     const storageModule = window.UTC_Vuz.registry.modules.storage;
-    if (!storageModule) {
-      console.error("Storage module not ready");
-      return;
-    }
-
     const fillQuestionsModule = window.UTC_Vuz.registry.modules.fillQuestions;
-    if (!fillQuestionsModule) {
-      console.error("fillQuestion module not ready");
+
+    if (!storageModule || !fillQuestionsModule) {
+      console.error("Modules not ready");
       return;
     }
 
-    const queue = await storageModule.getSurveyQueue();
+    let queue = await storageModule.getSurveyQueue();
+    const currentList = getListCourses();
+    const flatClasses = currentList.flatMap((c) => c.classes);
+
+    // Filter out completed courses from the head of the queue
+    let changed = false;
+    while (queue.length > 0) {
+      const top = queue[0];
+      const match = flatClasses.find((c) => c.value === top.value);
+      if (match && match.isCompleted) {
+        console.log(`[AutoFill] ${top.fullName} already completed, skipping.`);
+        queue.shift();
+        changed = true;
+      } else {
+        break;
+      }
+    }
+
+    if (changed) {
+      await storageModule.saveSurveyQueue(queue);
+    }
+
     if (!queue.length) {
-      await storageModule.stopAutoFill();
-      alert("Hoàn thành tất cả khảo sát");
+      const state = await storageModule.getAutoFillState();
+      if (state.running) {
+        await storageModule.stopAutoFill();
+        alert("Hoàn thành tất cả khảo sát!");
+      }
       return;
     }
-
-    await storageModule.startAutoFill();
 
     const currClass = queue[0];
-    await selectClass(currClass.value);
+    const courseSelector = document.querySelector(COURSE_SELECTOR);
+    const hasQuestions = !!document.querySelector('input[type="radio"]');
 
-    const newQueue = queue.slice(1);
-    await storageModule.saveSurveyQueue(newQueue);
-
-    await fillQuestionsModule.autofillQuestions(currClass.strategy);
+    if (hasQuestions) {
+      if (courseSelector && courseSelector.value === currClass.value) {
+        console.log(`[AutoFill] Filling questions for: ${currClass.fullName}`);
+        await fillQuestionsModule.autofillQuestions(currClass.strategy);
+      } else {
+        console.log(
+          `[AutoFill] Wrong class selected or need refresh. Selecting: ${currClass.fullName}`,
+        );
+        await selectClass(currClass.value);
+      }
+    } else {
+      console.log(`[AutoFill] Selecting class: ${currClass.fullName}`);
+      const success = await selectClass(currClass.value);
+      if (!success) {
+        console.error("[AutoFill] Could not find course selector");
+      }
+    }
   }
 
   // === === === === === ===

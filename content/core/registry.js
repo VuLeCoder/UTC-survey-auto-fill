@@ -1,6 +1,7 @@
 window.UTC_Vuz = window.UTC_Vuz || {};
 
 window.UTC_Vuz.registry = {
+  controller: {},
   modules: {},
   state: {},
 };

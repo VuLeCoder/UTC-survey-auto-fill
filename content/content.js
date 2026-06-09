@@ -23,7 +23,7 @@
 
       (async () => {
         if (config) {
-          await storageModule.saveCourseConfig(config.courseStrategies);
+          await storageModule.saveCourseConfig(config);
         }
 
         await autofillSurvey.initCourseQueue();

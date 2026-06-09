@@ -15,6 +15,11 @@ window.UTC_Vuz.bootstrap = async function () {
 
   await new Promise((r) => setTimeout(r, 300));
 
+  const autofillSurvey = window.UTC_Vuz.registry.modules.autofillSurvey;
+  if (autofillSurvey) {
+    await autofillSurvey.autoFill();
+  }
+
   console.log("[UTC] bootstrap done");
   return true;
 };
