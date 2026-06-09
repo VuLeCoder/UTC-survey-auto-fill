@@ -110,6 +110,10 @@ function renderCourses(courses) {
   });
 }
 
+document.getElementById("default-strategy").addEventListener("change", (e) => {
+  onConfigChange();
+});
+
 document.getElementById("save-btn").addEventListener("click", () => {
   state.config.defaultStrategy =
     document.getElementById("default-strategy").value;
