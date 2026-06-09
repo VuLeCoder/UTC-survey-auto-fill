@@ -4,19 +4,7 @@ const fillQuestionsModule = () => {
   // === === === === === ===
   const QUESTION_SELECTOR = 'input[type="radio"]';
   const BTN_SUBMIT_SELECTOR = "#btnupdate";
-  const COURSE_SELECTOR = 'select[name="lophocphan"]';
   const DELAY_SUBMIT = 800;
-
-  function setCourseSurvey(courseId) {
-    const courseSelector = document.querySelector(COURSE_SELECTOR);
-    if (!courseSelector) {
-      console.error("Khong thay select hoc phan");
-      return;
-    }
-
-    courseSelector.selectedIndex = courseId;
-    courseSelector.dispatchEvent(new Event("change", { bubbles: true }));
-  }
 
   function getQuestionGroups() {
     const questions = {};
@@ -67,9 +55,7 @@ const fillQuestionsModule = () => {
   // public
   // === === === === === ===
   return {
-    async autofillQuestions(courseId, strategy) {
-      setCourseSurvey(courseId);
-
+    async autofillQuestions(strategy) {
       const strategyModule = window.UTC_Vuz.registry.modules.strategy;
       if (!strategyModule?.generateAnswers) {
         console.error("Strategy module not ready");
