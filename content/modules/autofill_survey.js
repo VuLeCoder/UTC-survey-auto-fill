@@ -110,6 +110,8 @@ const autofillModule = () => {
   // public:
   // === === === === === ===
   return {
+    getListCourses,
+
     async initCourseQueue() {
       const storageModule = window.UTC_Vuz.registry.modules.storage;
       if (!storageModule) {
