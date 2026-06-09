@@ -1,0 +1,29 @@
+{
+  "manifest_version": 3,
+  "name": "UTC Survey Helper",
+  "description": "Auto fill sis.utc survey",
+  "version": "2.0.0",
+
+  "permissions": ["storage", "activeTab"],
+  "host_permissions": ["https://sis.utc.edu.vn/survey/*"],
+
+  "action": {
+    "default_popup": "popup/popup.html"
+  },
+
+  "content_scripts": [
+    {
+      "matches": ["https://sis.utc.edu.vn/survey/*"],
+      "js": [
+        "content/core/registry.js",
+        "content/core/bootstrap.js",
+
+        "content/modules/storage.js",
+        "content/modules/strategy.js",
+        "content/modules/autofill.js",
+
+        "content/content.js"
+      ]
+    }
+  ]
+}
