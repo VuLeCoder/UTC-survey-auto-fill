@@ -95,6 +95,7 @@ const autofillModule = () => {
       const state = await storageModule.getAutoFillState();
       if (state.running) {
         await storageModule.stopAutoFill();
+        await storageModule.clearStorage();
         alert("Hoàn thành tất cả khảo sát!");
       }
       return;

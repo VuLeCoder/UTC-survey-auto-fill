@@ -42,7 +42,6 @@ const storageModule = () => {
       return (
         (await get(AUTO_FILL_STATE)) || {
           running: false,
-          currentIndex: 0,
         }
       );
     },
